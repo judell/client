@@ -231,8 +231,8 @@ function generateBootScript(manifest, { usingDevServer = false } = {}) {
   const { version } = require('./package.json');
 
   const defaultSidebarAppUrl = process.env.SIDEBAR_APP_URL
-	? `${process.env.SIDEBAR_APP_URL}`
-	: '{current_scheme}://{current_host}:5000/app.html';
+    ? `${process.env.SIDEBAR_APP_URL}`
+    : '{current_scheme}://{current_host}:5000/app.html';
 
   const defaultAssetRoot = `https://labs.hypothes.is/hypothesis/${version}/`;
 
