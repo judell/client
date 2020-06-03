@@ -231,17 +231,10 @@ function generateBootScript(manifest, { usingDevServer = false } = {}) {
   const { version } = require('./package.json');
 
   const defaultSidebarAppUrl = process.env.SIDEBAR_APP_URL
-    ? `${process.env.SIDEBAR_APP_URL}`
-    : '{current_scheme}://{current_host}:5000/app.html';
+	? `${process.env.SIDEBAR_APP_URL}`
+	: '{current_scheme}://{current_host}:5000/app.html';
 
-  let defaultAssetRoot;
-
-  if (process.env.NODE_ENV === 'production' && !usingDevServer) {
-    defaultAssetRoot = 'https://cdn.hypothes.is/hypothesis';
-  } else {
-    defaultAssetRoot = '{current_scheme}://{current_host}:3001/hypothesis';
-  }
-  defaultAssetRoot = `${defaultAssetRoot}/${version}/`;
+  const defaultAssetRoot = `https://labs.hypothes.is/hypothesis/${version}/`;
 
   if (isFirstBuild) {
     log(`Sidebar app URL: ${defaultSidebarAppUrl}`);

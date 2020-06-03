@@ -36,10 +36,7 @@ if (appConfig.googleAnalytics) {
   addAnalytics(appConfig.googleAnalytics);
 }
 
-const isSidebar = !(
-  window.location.pathname.startsWith('/stream') ||
-  window.location.pathname.startsWith('/a/')
-);
+const isSidebar = false;
 
 // Install Preact renderer options to work around IE11 quirks
 rendererOptions.setupIE11Fixes();
