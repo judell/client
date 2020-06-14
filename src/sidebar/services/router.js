@@ -22,6 +22,7 @@ export default function router($window, store) {
         break;
       case 'stream':
         route = 'stream';
+        params.group = pathSegments[2] || '';    
         break;
       default:
         route = 'sidebar';
