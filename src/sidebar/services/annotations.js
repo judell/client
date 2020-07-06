@@ -1,3 +1,7 @@
+/** @typedef {import('../../types/api').Annotation} Annotation */
+/** @typedef {import('../../types/api').AnnotationData} AnnotationData */
+/** @typedef {import('../store')} HypothesisStore */
+
 /**
  * A service for creating, manipulating and persisting annotations and their
  * application-store representations. Interacts with API services as needed.
@@ -17,6 +21,8 @@ export default function annotationsService(api, store) {
   /**
    * Apply changes for the given `annotation` from its draft in the store (if
    * any) and return a new object with those changes integrated.
+   *
+   * @param {Annotation} annotation
    */
   function applyDraftChanges(annotation) {
     const changes = {};
@@ -36,6 +42,10 @@ export default function annotationsService(api, store) {
 
   /**
    * Extend new annotation objects with defaults and permissions.
+   *
+   * @param {AnnotationData} annotationData
+   * @param {Date} now
+   * @return {Annotation}
    */
   function initialize(annotationData, now = new Date()) {
     const defaultPrivacy = store.getDefault('annotationPrivacy');
@@ -69,7 +79,7 @@ export default function annotationsService(api, store) {
         user_info: userInfo,
         $tag: $tag,
       },
-      annotationData
+      /**@type {Object}*/ (annotationData)
     );
   }
 

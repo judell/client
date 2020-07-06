@@ -3,6 +3,7 @@
  */
 
 /** @typedef {import('../../types/api').Annotation} Annotation */
+/** @typedef {import('../../types/api').AnnotationData} AnnotationData */
 /** @typedef {import('../../types/api').TextPositionSelector} TextPositionSelector */
 /** @typedef {import('../../types/api').TextQuoteSelector} TextQuoteSelector */
 
@@ -195,7 +196,7 @@ export function isHidden(annotation) {
  * Highlights are generally identifiable by having no text content AND no tags,
  * but there is some nuance.
  *
- * @param {Annotation} annotation
+ * @param {Annotation|AnnotationData} annotation
  * @return {boolean}
  */
 export function isHighlight(annotation) {
@@ -206,8 +207,10 @@ export function isHighlight(annotation) {
   if (annotation.$highlight) {
     return true;
   }
+  // treat like @type Annotation from here
+  const _annotation = /**@type {Annotation}*/ (annotation);
 
-  if (isNew(annotation)) {
+  if (isNew(_annotation)) {
     // For new (unsaved-to-service) annotations, unless they have a truthy
     // `$highlight` attribute, we don't know yet if they are a highlight.
     return false;
@@ -218,11 +221,11 @@ export function isHighlight(annotation) {
   // to check for the existence of tags as well as text content.
 
   return (
-    !isPageNote(annotation) &&
-    !isReply(annotation) &&
-    !annotation.hidden && // A hidden annotation has some form of objectionable content
-    !annotation.text &&
-    !(annotation.tags && annotation.tags.length)
+    !isPageNote(_annotation) &&
+    !isReply(_annotation) &&
+    !_annotation.hidden && // A hidden annotation has some form of objectionable content
+    !_annotation.text &&
+    !(_annotation.tags && _annotation.tags.length)
   );
 }
 

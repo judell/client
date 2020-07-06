@@ -1,3 +1,5 @@
+/** @typedef {import('../../types/api').Analytics} Analytics */
+
 const VIA_REFERRER = /^https:\/\/(qa-)?via.hypothes.is\//;
 
 export const events = {
@@ -34,7 +36,6 @@ export const events = {
  * behavior across different environments in which the client is used.
  *
  * @param {Window} win
- * @param {Object} settings - Settings rendered into sidebar HTML
  * @return {string}
  */
 function clientType(win, settings = {}) {
@@ -68,6 +69,8 @@ function clientType(win, settings = {}) {
 /**
  * Analytics service for tracking page views and user interactions with the
  * application.
+ * @param {Window} $window - Test seam
+ * @return {Analytics}
  */
 // @ngInject
 export default function analytics($window, settings) {
@@ -78,6 +81,7 @@ export default function analytics($window, settings) {
   // is replaced when analytics.js fully loads.
   //
   // See https://developers.google.com/analytics/devguides/collection/analyticsjs/command-queue-reference
+  // @ts-ignore The window interface needs to be expanded to include this property
   const commandQueue = () => $window.ga || noop;
 
   return {

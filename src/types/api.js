@@ -74,6 +74,34 @@
  */
 
 /**
+ * @typedef AnnotationData
+ * @prop {string} uri
+ * @prop {string} $tag
+ * @prop {string} [$highlight]
+ * @prop {SelectSource[]} target
+ * @prop {Document} document
+ */
+
+/**
+ * @typedef SelectSource
+ * @prop {string} source
+ * @prop {Selector[]} selector
+ */
+
+/**
+ * @typedef Document
+ * @prop {string} title
+ * @prop {string[]} link
+ * @prop {Object} dc
+ * @prop {Object} eprints
+ * @prop {Object} facebook
+ * @prop {Object} highwire
+ * @prop {Object} prism
+ * @prop {Object} twitter
+ *
+ */
+
+/**
  * TODO - Fill out remaining properties
  *
  * @typedef Profile
@@ -111,6 +139,13 @@
  * @prop {boolean} isMember
  * @prop {boolean} isScopedToUri
  * @prop {boolean} canLeave
+ */
+
+/**
+ * @typedef Analytics
+ * @prop {() => any} sendPageView
+ * @prop {(action: string, label?: string, value?: number) => void} track
+ * @prop {Object} events
  */
 
 // Make TypeScript treat this file as a module.
