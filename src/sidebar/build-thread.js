@@ -15,11 +15,11 @@
 /**
  * Default state for new threads, before applying filters etc.
  *
- * @type {Thread}
+ * @type {Partial<Thread>}
  */
 const DEFAULT_THREAD_STATE = {
   /**
-   * The ID of this thread. This will be the same as the annotation ID for
+   * The id of this thread. This will be the same as the annotation id for
    * created annotations or the `$tag` property for new annotations.
    */
   id: '__default__',
@@ -31,14 +31,12 @@ const DEFAULT_THREAD_STATE = {
    * does not exist.
    */
   annotation: undefined,
-  /** The parent thread ID */
+  /** The parent thread id */
   parent: undefined,
   /** True if this thread is collapsed, hiding replies to this annotation. */
   collapsed: false,
   /** True if this annotation matches the current filters. */
   visible: true,
-  /** Replies to this annotation. */
-  children: [],
   /**
    * The total number of children of this annotation,
    * including any which have been hidden by filters.
@@ -56,53 +54,68 @@ const DEFAULT_THREAD_STATE = {
 /**
  * Returns a persistent identifier for an Annotation.
  * If the Annotation has been created on the server, it will have
- * an ID assigned, otherwise we fall back to the local-only '$tag'
+ * an id assigned, otherwise we fall back to the local-only '$tag'
  * property.
+ *
+ * @return {string}
  */
-function id(annotation) {
+function annotationId(annotation) {
   return annotation.id || annotation.$tag;
 }
 
 /**
- * Link the annotation with ID `id` to its parent thread.
+ * Is there a valid path from the thread indicated by `id` to the root thread,
+ * with no circular references?
  *
  * @param {string} id
- * @param {Array<string>} parents - IDs of parent annotations, from the
+ * @param {string} ancestorId
+ */
+function hasPathToRoot(threads, id, ancestorId) {
+  if (!threads[ancestorId] || threads[ancestorId].parent === id) {
+    // Thread for ancestor not found, or points at itself: circular reference
+    return false;
+  } else if (!threads[ancestorId].parent) {
+    // Top of the tree: we've made it
+    return true;
+  }
+  return hasPathToRoot(threads, id, threads[ancestorId].parent);
+}
+
+/**
+ * Link the annotation to its parent
+ *
+ * @param {string} id
+ * @param {Array<string>} [parents] - ids of parent annotations, from the
  *        annotation's `references` field.
  */
-function setParentID(threads, id, parents) {
+function setParent(threads, id, parents = []) {
   if (threads[id].parent || !parents.length) {
     // Parent already assigned, do not try to change it.
     return;
   }
-  const parentID = parents[parents.length - 1];
-  if (!threads[parentID]) {
+  // The last entry in `parents` is this thread's immediate parent
+  const parentId = parents[parents.length - 1];
+  if (!threads[parentId]) {
     // Parent does not exist. This may be a reply to an annotation which has
     // been deleted. Create a placeholder Thread with no annotation to
     // represent the missing annotation.
-    threads[parentID] = Object.assign({}, DEFAULT_THREAD_STATE, {
-      id: parentID,
-      children: [],
-    });
-    setParentID(threads, parentID, parents.slice(0, -1));
+    threads[parentId] = {
+      ...DEFAULT_THREAD_STATE,
+      ...{ children: [] },
+    };
+    // Link up this new thread to _its_ parent, which should be the original
+    // thread's grandparent
+    setParent(threads, parentId, parents.slice(0, -1));
   }
 
-  let grandParentID = threads[parentID].parent;
-  while (grandParentID) {
-    if (grandParentID === id) {
-      // There is a loop in the `references` field, abort.
-      return;
-    } else {
-      grandParentID = threads[grandParentID].parent;
-    }
+  if (hasPathToRoot(threads, id, parentId)) {
+    threads[id].parent = parentId;
+    threads[parentId].children.push(threads[id]);
   }
-
-  threads[id].parent = parentID;
-  threads[parentID].children.push(threads[id]);
 }
 
 /**
- * Creates a thread of annotations from a list of annotations.
+ * Creates a thread tree of annotations from a list of annotations.
  *
  * Given a flat list of annotations and replies, this generates a hierarchical
  * thread, using the `references` field of an annotation to link together
@@ -114,49 +127,44 @@ function setParentID(threads, id, parents) {
  * @return {Thread} - The input annotations threaded into a tree structure.
  */
 function threadAnnotations(annotations) {
-  // Map of annotation ID -> container
+  // Map of annotation id -> Thread
   const threads = {};
 
-  // Build mapping of annotation ID -> thread
-  annotations.forEach(function (annotation) {
-    threads[id(annotation)] = Object.assign({}, DEFAULT_THREAD_STATE, {
-      id: id(annotation),
-      annotation: annotation,
-      children: [],
-    });
+  // Create a `Thread` for each annotation
+  annotations.forEach(annotation => {
+    const id = annotationId(annotation);
+    threads[id] = {
+      ...DEFAULT_THREAD_STATE,
+      ...{ children: [], annotation, id },
+    };
   });
 
-  // Set each thread's parent based on the references field
-  annotations.forEach(function (annotation) {
-    if (!annotation.references) {
-      return;
-    }
-    setParentID(threads, id(annotation), annotation.references);
-  });
+  // Establish ancestral relationships between annotations
+  annotations.forEach(annotation =>
+    setParent(threads, annotationId(annotation), annotation.references)
+  );
 
   // Collect the set of threads which have no parent as
   // children of the thread root
-  const roots = [];
-  Object.keys(threads).forEach(function (id) {
-    if (!threads[id].parent) {
+  const rootThreads = [];
+  for (const rootThreadId in threads) {
+    if (!threads[rootThreadId].parent) {
       // Top-level threads are collapsed by default
-      threads[id].collapsed = true;
-      roots.push(threads[id]);
+      threads[rootThreadId].collapsed = true;
+      rootThreads.push(threads[rootThreadId]);
     }
-  });
+  }
 
-  const root = {
-    id: 'root',
-    annotation: undefined,
-    children: roots,
-    visible: true,
-    collapsed: false,
-    totalChildren: roots.length,
-    parent: undefined,
-    highlightState: undefined,
+  const rootThread = {
+    ...DEFAULT_THREAD_STATE,
+    ...{
+      id: 'root',
+      children: rootThreads,
+      totalChildren: rootThreads.length,
+    },
   };
 
-  return root;
+  return rootThread;
 }
 
 /**
@@ -182,7 +190,7 @@ function mapThread(thread, mapFn) {
  * @return {Array<Thread>} Sorted list of threads
  */
 function sort(threads, compareFn) {
-  return threads.slice().sort(function (a, b) {
+  return threads.slice().sort((a, b) => {
     // Threads with no annotation always sort to the top
     if (!a.annotation || !b.annotation) {
       if (!a.annotation && !b.annotation) {
@@ -203,17 +211,23 @@ function sort(threads, compareFn) {
 }
 
 /**
- * Return a copy of `thread` with siblings of the top-level thread sorted according
- * to `compareFn` and replies sorted by `replyCompareFn`.
+ * Return a new `Thread` object with all (recursive) `children` arrays sorted.
+ * Sort the children of top-level threads using `compareFn` and all other
+ * children using `replyCompareFn`.
+ *
+ * @param {Thread} thread
+ * @param {(a: Annotation, b: Annotation) => boolean} compareFn - Less-than
+ *         comparison function for sorting top-level annotations
+ * @param {(a: Annotation, b: Annotation) => boolean} replyCompareFn - Less-than
+ *       comparison function for sorting replies
+ * @return {Thread}
  */
 function sortThread(thread, compareFn, replyCompareFn) {
-  const children = thread.children.map(function (child) {
-    return sortThread(child, replyCompareFn, replyCompareFn);
-  });
+  const children = thread.children.map(child =>
+    sortThread(child, replyCompareFn, replyCompareFn)
+  );
 
-  return Object.assign({}, thread, {
-    children: sort(children, compareFn),
-  });
+  return { ...thread, ...{ children: sort(children, compareFn) } };
 }
 
 /**
@@ -221,16 +235,19 @@ function sortThread(thread, compareFn, replyCompareFn) {
  * updated.
  */
 function countRepliesAndDepth(thread, depth) {
-  const children = thread.children.map(function (c) {
-    return countRepliesAndDepth(c, depth + 1);
-  });
-  return Object.assign({}, thread, {
-    children: children,
-    depth: depth,
-    replyCount: children.reduce(function (total, child) {
-      return total + 1 + child.replyCount;
-    }, 0),
-  });
+  const children = thread.children.map(c => countRepliesAndDepth(c, depth + 1));
+  const replyCount = children.reduce(
+    (total, child) => total + 1 + child.replyCount,
+    0
+  );
+  return {
+    ...thread,
+    ...{
+      children,
+      depth,
+      replyCount,
+    },
+  };
 }
 
 /** Return true if a thread has any visible children. */
@@ -243,56 +260,48 @@ function hasVisibleChildren(thread) {
 /**
  * @typedef Options
  * @prop {string[]} [selected]
- * @prop {string[]} [forceVisible]
- * @prop {(a: Annotation) => boolean} [filterFn]
- * @prop {(t: Thread) => boolean} [threadFilterFn]
- * @prop {Object} [expanded]
- * @prop {Object} [highlighted]
- * @prop {(a: Annotation, b: Annotation) => boolean} [sortCompareFn]
- * @prop {(a: Annotation, b: Annotation) => boolean} [replySortCompareFn]
+ * @prop {string[]} [forceVisible] - List of ids of annotations that have
+ *       been explicitly expanded by the user, even if they don't
+ *       match current filters
+ * @prop {(a: Annotation) => boolean} [filterFn] - Predicate function that
+ *       returns `true` if annotation should be visible
+ * @prop {(t: Thread) => boolean} [threadFilterFn] - Predicate function that
+ *       returns `true` if the annotation should be included in the thread tree
+ * @prop {Object} [expanded] - List of ids of annotations/threads that have been
+ *       expanded by the user
+ * @prop {Object} [highlighted] - List of ids of annotations that are highlighted
+ * @prop {(a: Annotation, b: Annotation) => boolean} [sortCompareFn] - Less-than
+ *       comparison function for sorting top-level annotations
+ * @prop {(a: Annotation, b: Annotation) => boolean} [replySortCompareFn] - Less-than
+ *       comparison function for sorting replies
  */
 
 /**
  * Default options for buildThread()
  *
- * @type {Partial<Options>}
+ * @type {Options}
  */
 const defaultOpts = {
-  /** List of currently selected annotation IDs */
+  /** List of currently selected annotation ids */
   selected: [],
   /**
-   * List of IDs of annotations that should be shown even if they
-   * do not match the current filter.
-   */
-  forceVisible: undefined,
-  /**
-   * Predicate function that returns true if an annotation should be
-   * displayed.
-   */
-  filterFn: undefined,
-  /**
-   * A filter function which should return true if a given annotation and
-   * its replies should be displayed.
-   */
-  threadFilterFn: undefined,
-  /**
-   * Mapping of annotation IDs to expansion states.
+   * Mapping of annotation ids to expansion states.
    */
   expanded: {},
-  /** List of highlighted annotation IDs */
+  /** List of highlighted annotation ids */
   highlighted: [],
   /**
    * Less-than comparison function used to compare annotations in order to sort
    * the top-level thread.
    */
-  sortCompareFn: function (a, b) {
+  sortCompareFn: (a, b) => {
     return a.id < b.id;
   },
   /**
    * Less-than comparison function used to compare annotations in order to sort
    * replies.
    */
-  replySortCompareFn: function (a, b) {
+  replySortCompareFn: (a, b) => {
     return a.created < b.created;
   },
 };
@@ -306,84 +315,94 @@ const defaultOpts = {
  * the thread structure that should be rendered.
  *
  * @param {Array<Annotation>} annotations - A list of annotations and replies
- * @param {Options} opts
+ * @param {Partial<Options>} options
  * @return {Thread} - The root thread, whose children are the top-level
  *                    annotations to display.
  */
-export default function buildThread(annotations, opts) {
-  opts = Object.assign({}, defaultOpts, opts);
+export default function buildThread(annotations, options) {
+  const opts = { ...defaultOpts, ...options };
+
+  const annotationsFiltered = !!opts.filterFn;
+  const threadsFiltered = !!opts.threadFilterFn;
+
+  const hasHighlights = opts.highlighted.length > 0;
+  const hasSelected = opts.selected.length > 0;
+  const hasForcedVisible = opts.forceVisible && opts.forceVisible.length;
 
   let thread = threadAnnotations(annotations);
 
-  // Mark annotations as visible or hidden depending on whether
-  // they are being edited and whether they match the current filter
-  // criteria
-  const shouldShowThread = function (annotation) {
-    if (opts.forceVisible && opts.forceVisible.indexOf(id(annotation)) !== -1) {
+  if (hasSelected) {
+    // Remove threads (annotations) that are not selected
+    thread.children = thread.children.filter(
+      child => opts.selected.indexOf(child.id) !== -1
+    );
+  }
+
+  if (threadsFiltered) {
+    // Remove threads not matching thread-level filters
+    thread.children = thread.children.filter(opts.threadFilterFn);
+  }
+
+  /**
+   * Should this thread be visible or not?
+   *
+   * @param {Thread} thread
+   * @return {boolean}
+   */
+  const isVisible = thread => {
+    if (!thread.visible || !thread.annotation) {
+      return false;
+    }
+    // Respect threads that have been "forced visible"
+    if (
+      hasForcedVisible &&
+      opts.forceVisible.indexOf(annotationId(thread.annotation)) !== -1
+    ) {
       return true;
     }
-    if (opts.filterFn && !opts.filterFn(annotation)) {
+    // If this annotation doesn't match the current filters
+    if (annotationsFiltered && !opts.filterFn(thread.annotation)) {
       return false;
     }
     return true;
   };
 
-  // When there is a selection, only include top-level threads (annotations)
-  // that are selected
-  if (opts.selected.length > 0) {
-    thread = Object.assign({}, thread, {
-      children: thread.children.filter(function (child) {
-        return opts.selected.indexOf(child.id) !== -1;
-      }),
-    });
-  }
-
-  // Set the visibility and highlight states of threads
-  thread = mapThread(thread, function (thread) {
-    let highlightState;
-    if (opts.highlighted.length > 0) {
-      const isHighlighted =
-        thread.annotation && opts.highlighted.indexOf(thread.id) !== -1;
-      highlightState = isHighlighted ? 'highlight' : 'dim';
-    }
-
-    return Object.assign({}, thread, {
-      highlightState: highlightState,
-      visible:
-        thread.visible &&
-        thread.annotation &&
-        shouldShowThread(thread.annotation),
-    });
-  });
-
-  // Expand any threads which:
-  // 1) Have been explicitly expanded OR
-  // 2) Have children matching the filter
-  thread = mapThread(thread, function (thread) {
-    const id = thread.id;
-
-    // If the thread was explicitly expanded or collapsed, respect that option
-    if (opts.expanded.hasOwnProperty(id)) {
-      return Object.assign({}, thread, { collapsed: !opts.expanded[id] });
-    }
-
-    const hasUnfilteredChildren = opts.filterFn && hasVisibleChildren(thread);
-
-    return Object.assign({}, thread, {
-      collapsed: thread.collapsed && !hasUnfilteredChildren,
-    });
+  // Set visibility state for all descendant threads
+  thread = mapThread(thread, thread => {
+    return { ...thread, ...{ visible: isVisible(thread) } };
   });
 
   // Remove top-level threads which contain no visible annotations
-  thread.children = thread.children.filter(function (child) {
-    return child.visible || hasVisibleChildren(child);
-  });
+  thread.children = thread.children.filter(
+    child => child.visible || hasVisibleChildren(child)
+  );
 
-  // Get annotations which are of type notes or annotations depending
-  // on the filter.
-  if (opts.threadFilterFn) {
-    thread.children = thread.children.filter(opts.threadFilterFn);
-  }
+  // Determine other UI states for threads
+  thread = mapThread(thread, thread => {
+    const threadStates = {
+      collapsed: thread.collapsed,
+    };
+
+    if (hasHighlights) {
+      if (thread.annotation && opts.highlighted.indexOf(thread.id) !== -1) {
+        threadStates.highlightState = 'highlight';
+      } else {
+        threadStates.highlightState = 'dim';
+      }
+    }
+
+    if (opts.expanded.hasOwnProperty(thread.id)) {
+      // This thread has been explicitly expanded/collapsed by user
+      threadStates.collapsed = !opts.expanded[thread.id];
+    } else {
+      // If annotations are filtered, and at least one child matches
+      // those filters, make sure thread is not collapsed
+      const hasUnfilteredChildren =
+        annotationsFiltered && hasVisibleChildren(thread);
+      threadStates.collapsed = thread.collapsed && !hasUnfilteredChildren;
+    }
+    return { ...thread, ...threadStates };
+  });
 
   // Sort the root thread according to the current search criteria
   thread = sortThread(thread, opts.sortCompareFn, opts.replySortCompareFn);
