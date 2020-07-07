@@ -34,6 +34,12 @@
  */
 
 /**
+ * @typedef Target
+ * @prop {string} target.source
+ * @prop {Selector[]} [target.selector]
+ * 
+ 
+/**
  * TODO - Fill out remaining properties
  *
  * @typedef Annotation
@@ -56,9 +62,7 @@
  *   @prop {string[]} permissions.update
  *   @prop {string[]} permissions.delete
  *
- * @prop {Object[]} target
- *   @prop {string} target.source
- *   @prop {Selector[]} [target.selector]
+ * @prop {Target[]} target
  *
  * @prop {Object} [moderation]
  *   @prop {number} moderation.flagCount
@@ -71,34 +75,6 @@
  * @prop {boolean} [$highlight]
  * @prop {boolean} [$orphan]
  * @prop {boolean} [$anchorTimeout]
- */
-
-/**
- * @typedef AnnotationData
- * @prop {string} uri
- * @prop {string} $tag
- * @prop {string} [$highlight]
- * @prop {SelectSource[]} target
- * @prop {Document} document
- */
-
-/**
- * @typedef SelectSource
- * @prop {string} source
- * @prop {Selector[]} selector
- */
-
-/**
- * @typedef Document
- * @prop {string} title
- * @prop {string[]} link
- * @prop {Object} dc
- * @prop {Object} eprints
- * @prop {Object} facebook
- * @prop {Object} highwire
- * @prop {Object} prism
- * @prop {Object} twitter
- *
  */
 
 /**

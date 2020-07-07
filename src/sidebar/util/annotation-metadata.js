@@ -3,7 +3,7 @@
  */
 
 /** @typedef {import('../../types/api').Annotation} Annotation */
-/** @typedef {import('../../types/api').AnnotationData} AnnotationData */
+/** @typedef {import('../../types/annotator').AnnotationData} AnnotationData */
 /** @typedef {import('../../types/api').TextPositionSelector} TextPositionSelector */
 /** @typedef {import('../../types/api').TextQuoteSelector} TextQuoteSelector */
 

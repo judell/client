@@ -1,5 +1,5 @@
 /** @typedef {import('../../types/api').Annotation} Annotation */
-/** @typedef {import('../../types/api').AnnotationData} AnnotationData */
+/** @typedef {import('../../types/annotator').AnnotationData} AnnotationData */
 /** @typedef {import('../store')} HypothesisStore */
 
 /**
