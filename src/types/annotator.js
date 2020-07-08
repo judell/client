@@ -9,7 +9,7 @@
  * @prop {string} uri
  * @prop {Target[]} target
  * @prop {string} $tag
- * @prop {boolean} $highlight
+ * @prop {boolean} [$highlight]
  * @prop {DocumentMetadata} document
  */
 
