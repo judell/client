@@ -7,24 +7,27 @@
 /**
  * @typedef AnnotationData
  * @prop {string} uri
- * @prop {string} $tag
- * @prop {string} [$highlight]
  * @prop {Target[]} target
- * @prop {Document} document
+ * @prop {string} $tag
+ * @prop {boolean} $highlight
+ * @prop {DocumentMetadata} document
  */
 
 /**
- * @typedef Document
+ * @typedef DocumentMetadata
  * @prop {string} title
  * @prop {Object[]} link
  *   @prop {string} link.rel
  *   @prop {string} link.type
- * @prop {Object} dc
- * @prop {Object} eprints
- * @prop {Object} facebook
- * @prop {Object} highwire
- * @prop {Object} prism
- * @prop {Object} twitter
+ * // html pages
+ * @prop {Object.<string, string[]>} [dc]
+ * @prop {Object.<string, string[]>} [eprints]
+ * @prop {Object.<string, string[]>} [facebook]
+ * @prop {Object.<string, string[]>} [highwire]
+ * @prop {Object.<string, string[]>} [prism]
+ * @prop {Object.<string, string[]>} [twitter]
+ * // pdf files
+ * @prop {string} [documentFingerprint]
  */
 
 // Make TypeScript treat this file as a module.

@@ -1,6 +1,5 @@
 /** @typedef {import('../../types/api').Annotation} Annotation */
 /** @typedef {import('../../types/annotator').AnnotationData} AnnotationData */
-/** @typedef {import('../store')} HypothesisStore */
 
 /**
  * A service for creating, manipulating and persisting annotations and their
@@ -60,27 +59,29 @@ export default function annotationsService(api, store) {
     // as it has not been persisted to the service.
     const $tag = generateHexString(8);
 
-    let permissions = defaultPermissions(userid, groupid, defaultPrivacy);
-
-    // Highlights are peculiar in that they always have private permissions
-    if (metadata.isHighlight(annotationData)) {
-      permissions = privatePermissions(userid);
-    }
-
-    return Object.assign(
+    /** @type {Annotation} */
+    const annotation = Object.assign(
       {
         created: now.toISOString(),
         group: groupid,
-        permissions,
+        permissions: defaultPermissions(userid, groupid, defaultPrivacy),
         tags: [],
         text: '',
         updated: now.toISOString(),
         user: userid,
         user_info: userInfo,
         $tag: $tag,
+        hidden: false,
+        links: {},
       },
-      /**@type {Object}*/ (annotationData)
+      annotationData
     );
+
+    // Highlights are peculiar in that they always have private permissions
+    if (metadata.isHighlight(annotation)) {
+      annotation.permissions = privatePermissions(userid);
+    }
+    return annotation;
   }
 
   /**

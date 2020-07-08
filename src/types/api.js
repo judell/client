@@ -35,8 +35,8 @@
 
 /**
  * @typedef Target
- * @prop {string} target.source
- * @prop {Selector[]} [target.selector]
+ * @prop {string} source
+ * @prop {Selector[]} [selector]
  * 
  
 /**

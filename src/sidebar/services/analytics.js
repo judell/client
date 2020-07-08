@@ -1,5 +1,3 @@
-/** @typedef {import('../../types/api').Analytics} Analytics */
-
 const VIA_REFERRER = /^https:\/\/(qa-)?via.hypothes.is\//;
 
 export const events = {
@@ -65,6 +63,13 @@ function clientType(win, settings = {}) {
 
   return type;
 }
+
+/**
+ * @typedef Analytics
+ * @prop {() => any} sendPageView
+ * @prop {(action: string, label?: string, value?: number) => void} track
+ * @prop {Object} events
+ */
 
 /**
  * Analytics service for tracking page views and user interactions with the
