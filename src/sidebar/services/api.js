@@ -130,6 +130,9 @@ function createAPICall(
           params
         );
         const apiUrl = new URL(url);
+	if (url === 'https://hypothes.is/api/search' && localStorage['h_mode'] === 'group') {
+	  queryParams['group'] = localStorage['h_group']
+	}
         apiUrl.search = queryString.stringify(queryParams);
 
         return fetch(apiUrl.toString(), {

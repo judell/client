@@ -11,7 +11,8 @@ RUN apk update && apk add --no-cache \
   make \
   nodejs \
   npm \
-  yarn
+  yarn \
+  bash
 
 # Do not download a Chrome build as part of installing the "puppeteer" package,
 # it won't work in Alpine.
@@ -19,3 +20,15 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 # Enable test scripts to detect that they are running from the Docker image.
 ENV RUNNING_IN_DOCKER true
+
+WORKDIR /client
+
+COPY . .
+
+RUN yarn
+
+EXPOSE 3001
+
+#CMD ["./node_modules/gulp/bin/gulp.js", "watch"]
+CMD ["bash"]
+

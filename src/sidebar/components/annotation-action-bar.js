@@ -31,13 +31,13 @@ function AnnotationActionBar({
     return permits(annotation.permissions, action, userProfile.userid);
   };
 
-  const showDeleteAction = userIsAuthorizedTo('delete');
-  const showEditAction = userIsAuthorizedTo('update');
+  const showDeleteAction = false;
+  const showEditAction = false;
 
   // Anyone may flag an annotation except the annotation's author.
   // This option is even presented to anonymous users
-  const showFlagAction = userProfile.userid !== annotation.user;
-  const showShareAction = isShareable(annotation, settings);
+  const showFlagAction = false;
+  const showShareAction = false;
 
   const createDraft = useStore(store => store.createDraft);
 
@@ -81,7 +81,6 @@ function AnnotationActionBar({
       {showDeleteAction && (
         <Button icon="trash" title="Delete" onClick={onDelete} />
       )}
-      <Button icon="reply" title="Reply" onClick={onReplyClick} />
       {showShareAction && (
         <AnnotationShareControl
           annotation={annotation}

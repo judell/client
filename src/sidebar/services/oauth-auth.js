@@ -168,7 +168,7 @@ export default function auth(
    */
   function tokenGetter() {
     if (!tokenInfoPromise) {
-      const cfg = serviceConfig(settings);
+      const cfg = { grantToken: settings.grantToken };
 
       // Check if automatic login is being used, indicated by the presence of
       // the 'grantToken' property in the service configuration.

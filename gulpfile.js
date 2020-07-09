@@ -234,6 +234,7 @@ function generateBootScript(manifest, { usingDevServer = false } = {}) {
     ? `${process.env.SIDEBAR_APP_URL}`
     : '{current_scheme}://{current_host}:5000/app.html';
 
+/*
   let defaultAssetRoot;
 
   if (process.env.NODE_ENV === 'production' && !usingDevServer) {
@@ -241,7 +242,11 @@ function generateBootScript(manifest, { usingDevServer = false } = {}) {
   } else {
     defaultAssetRoot = '{current_scheme}://{current_host}:3001/hypothesis';
   }
+
   defaultAssetRoot = `${defaultAssetRoot}/${version}/`;
+*/
+
+  const defaultAssetRoot = `https://labs.hypothes.is/client/hypothesis/${version}/`;
 
   if (isFirstBuild) {
     log(`Sidebar app URL: ${defaultSidebarAppUrl}`);
