@@ -303,7 +303,7 @@ gulp.task('serve-test-pages', function () {
   new DevServer(3000, {
     // The scheme is omitted here as the client asset server will use the same
     // protcol (HTTP or HTTPS) as the test page server.
-    clientUrl: `//{current_host}:3001/hypothesis`,
+    clientUrl: `//{current_host}:3001/client/hypothesis`
   });
 });
 

@@ -37,13 +37,13 @@ function servePackage(port) {
 
   // Set up URLs which serve the boot script and package content, mirroring
   // cdn.hypothes.is' structure.
-  app.get('/hypothesis', serveBootScript);
-  app.get(`/hypothesis/${version}`, serveBootScript);
-  app.use(`/hypothesis/${version}/`, express.static('.'));
+  app.get('/client/hypothesis', serveBootScript);
+  app.get(`/client/hypothesis/${version}`, serveBootScript);
+  app.use(`/client/hypothesis/${version}/`, express.static('.'));
 
   createServer(app).listen(port, () => {
     const scheme = useSsl ? 'https' : 'http';
-    log(`Package served at ${scheme}://localhost:${port}/hypothesis`);
+    log(`Package served at ${scheme}://localhost:${port}/client/hypothesis`);
   });
 }
 

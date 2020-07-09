@@ -27,8 +27,11 @@ COPY . .
 
 RUN yarn
 
+RUN node ./node_modules/gulp/bin/gulp.js build
+
 EXPOSE 3001
 
 CMD ["node", "./node_modules/gulp/bin/gulp.js", "watch"]
+
 
 
