@@ -29,6 +29,6 @@ RUN yarn
 
 EXPOSE 3001
 
-#CMD ["./node_modules/gulp/bin/gulp.js", "watch"]
-CMD ["bash"]
+CMD ["node", "./node_modules/gulp/bin/gulp.js", "watch"]
+
 
