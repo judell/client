@@ -132,6 +132,7 @@ function createAPICall(
         const apiUrl = new URL(url);
 	if (url === 'https://hypothes.is/api/search' && !('references' in queryParams)) {
 	  queryParams['group'] = localStorage['h_group']
+	  queryParams['user'] = localStorage['h_user']
 	}
         apiUrl.search = queryString.stringify(queryParams);
 
